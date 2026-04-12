@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+motor
+pymongo
+qdrant-client
+neo4j
+pydantic
+pydantic-settings
+langchain
+langchain-text-splitters
+langgraph
+langchain-openai
+python-multipart
+mem0ai
+pypdf
+langchain-community
+langgraph-checkpoint-mongodb
