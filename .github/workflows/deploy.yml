@@ -33,6 +33,6 @@ jobs:
             cd ..
 
             # Restart both services
-            pm2 restart ecosystem.config.js
+            pm2 restart all
 
             echo "Deploy complete!"

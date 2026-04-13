@@ -5,9 +5,9 @@ module.exports = {
   apps: [
     {
       name: "docmind-backend",
-      cwd: "./backend",
-      script: "app/main.py",
-      interpreter: "/home/ubuntu/DocMind/backend/venv/bin/python",
+      cwd: "/home/ubuntu/DocMind/backend",
+      script: "venv/bin/python",
+      args: "app/main.py",
       env: {
         PORT: 8000,
       },
@@ -17,7 +17,7 @@ module.exports = {
     },
     {
       name: "docmind-frontend",
-      cwd: "./frontend",
+      cwd: "/home/ubuntu/DocMind/frontend",
       script: "node_modules/.bin/next",
       args: "start -p 3000",
       env: {
