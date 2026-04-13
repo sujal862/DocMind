@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+export const DEFAULT_USER_ID = 'default_user';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -56,18 +57,41 @@ export const api = {
     } catch (e) { handleApiError(e); }
   },
 
-  // Chat
-  sendChatMessage: async (query) => {
+  getEntityGraph: async (name) => {
     try {
-      const response = await apiClient.post('/chat', { query });
+      const response = await apiClient.get(`/graph/entity/${encodeURIComponent(name)}`);
+      return response.data;
+    } catch (e) { handleApiError(e); }
+  },
+
+  // Chat
+  sendChatMessage: async (query, userId = DEFAULT_USER_ID) => {
+    try {
+      const response = await apiClient.post('/chat', { query, user_id: userId });
       return response.data;
     } catch (e) { handleApiError(e); }
   },
   
-  getChatHistory: async () => {
+  getChatHistory: async (userId = DEFAULT_USER_ID) => {
       try {
-          const response = await apiClient.get('/chat/history');
+          const response = await apiClient.get('/chat/history', {
+            params: { user_id: userId },
+          });
           return response.data;
       } catch (e) { handleApiError(e); }
-  }
+  },
+
+  getDocumentById: async (id) => {
+    try {
+      const response = await apiClient.get(`/documents/${id}`);
+      return response.data;
+    } catch (e) { handleApiError(e); }
+  },
+
+  resetAll: async () => {
+    try {
+      const response = await apiClient.delete('/reset');
+      return response.data;
+    } catch (e) { handleApiError(e); }
+  },
 };
