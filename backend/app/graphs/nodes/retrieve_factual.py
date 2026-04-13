@@ -23,15 +23,15 @@ async def retrieve_factual_node(state: Dict[str, Any]) -> Dict[str, Any]:
     # Embed the user query
     query_vector = await embeddings_model.aembed_query(query)
     
-    # Search Qdrant
-    search_result = await client.search(
+    search_result = await client.query_points(
         collection_name="docmind_chunks",
-        query_vector=query_vector,
-        limit=5
+        query=query_vector,
+        limit=5,
+        with_payload=True,
     )
     
     retrieved_texts = []
-    for hit in search_result:
+    for hit in search_result.points:
         if not hit.payload:
             continue
         filename = hit.payload.get("filename", "unknown")

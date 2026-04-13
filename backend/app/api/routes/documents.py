@@ -96,6 +96,7 @@ async def delete_document(id: str):
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
+    # Cleanup related data in Qdrant and Neo4j using file_id references
     client = get_qdrant()
     if await client.collection_exists("docmind_chunks"):
         await client.delete(

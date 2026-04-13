@@ -135,3 +135,84 @@ Final answer banne ke baad **Mem0** mein interaction store ho jata hai. So next 
 | **LangGraph** | Workflow manager / traffic controller |
 | **OpenAI model** | Reasoning + extraction + answer generator |
 | **Mem0** | User ki personal memory notebook |
+
+
+
+
+
+
+
+
+
+
+# Phase : saving and retriever of document in neo4j
+
+**Document ID tracking — exactly kya store ho raha hai:**
+
+---
+
+## Node mein kya store hota hai:
+
+```
+Node: Elon Musk
+{
+  id: "elon musk",              ← entity ka unique ID
+  label: "Person",              ← type
+  source_file_ids: [            ← kon kon se PDFs mein tha
+    "69dbf28733a1d3d21f37a990",
+    "69dbf32333a1d3d21f37a992"
+  ],
+  source_filenames: [           ← readable names
+    "paper1.pdf",
+    "paper2.pdf"
+  ]
+}
+```
+
+---
+
+## Relationship mein kya store hota hai:
+
+```
+Edge: Elon Musk -[WORKS_AT]-> Tesla
+{
+  type: "WORKS_AT",
+  source_file_ids: ["69dbf28733a1d3d21f37a990"],   ← kis PDF se nikla
+  source_filenames: ["paper1.pdf"]
+}
+```
+
+---
+
+## Document Node alag bhi banta hai:
+
+```
+Node: Document
+{
+  id: "69dbf28733a1d3d21f37a990",   ← MongoDB ka same ID
+  name: "paper1.pdf"
+}
+
++ har entity se connection banta hai:
+Elon Musk -[MENTIONED_IN]-> Document(paper1.pdf)
+```
+
+---
+
+## Real example — 2 PDFs upload karo:
+
+```
+PDF 1 (the_last_lesson.pdf):
+  Franz    -[STUDENT_OF]->  M. Hamel
+  Franz    -[MENTIONED_IN]-> Document(the_last_lesson)
+
+PDF 2 (another.pdf):
+  Franz    -[MENTIONED_IN]-> Document(another)
+
+Ab Franz node mein:
+  source_file_ids: ["id1", "id2"]  ← dono PDFs track ho rahe hain ✅
+```
+
+---
+
+**One line:** Entity apne andar PDF IDs carry karta hai — toh pata rehta hai yeh entity **kahan kahan** mention hui hai 😄

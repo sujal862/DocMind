@@ -50,6 +50,8 @@ async def generation_node(state: Dict[str, Any]) -> Dict[str, Any]:
     answer = result.content
     
     # Store the final interaction in Mem0
+    # Mem0 khud decide karta hai — is conversation se 
+    # koi long-term memory worth saving hai ya nahi based on relevance and user preferences (like user says in query: who is franz?  give me anser in concise form, so Mem0 might choose to only save the concise answer and not the entire context)
     memory = get_memory()
     memory.add(f"User asked: {query} | System answered: {answer}", user_id=user_id)
     
