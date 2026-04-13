@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const envUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = envUrl.endsWith('/') ? envUrl : envUrl + '/';
 export const DEFAULT_USER_ID = 'default_user';
 
 const apiClient = axios.create({
@@ -28,7 +29,7 @@ export const api = {
     try {
       const formData = new FormData();
       files.forEach((file) => formData.append('files', file));
-      const response = await apiClient.post('/documents/upload', formData, {
+      const response = await apiClient.post('documents/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;
@@ -37,14 +38,14 @@ export const api = {
   
   getDocuments: async () => {
     try {
-      const response = await apiClient.get('/documents');
+      const response = await apiClient.get('documents');
       return response.data.documents || [];
     } catch (e) { handleApiError(e); }
   },
 
   deleteDocument: async (id) => {
     try {
-      const response = await apiClient.delete(`/documents/${id}`);
+      const response = await apiClient.delete(`documents/${id}`);
       return response.data;
     } catch (e) { handleApiError(e); }
   },
@@ -52,14 +53,14 @@ export const api = {
   // Knowledge Graph
   getKnowledgeGraph: async () => {
     try {
-      const response = await apiClient.get('/graph');
+      const response = await apiClient.get('graph');
       return response.data;
     } catch (e) { handleApiError(e); }
   },
 
   getEntityGraph: async (name) => {
     try {
-      const response = await apiClient.get(`/graph/entity/${encodeURIComponent(name)}`);
+      const response = await apiClient.get(`graph/entity/${encodeURIComponent(name)}`);
       return response.data;
     } catch (e) { handleApiError(e); }
   },
@@ -67,14 +68,14 @@ export const api = {
   // Chat
   sendChatMessage: async (query, userId = DEFAULT_USER_ID) => {
     try {
-      const response = await apiClient.post('/chat', { query, user_id: userId });
+      const response = await apiClient.post('chat', { query, user_id: userId });
       return response.data;
     } catch (e) { handleApiError(e); }
   },
   
   getChatHistory: async (userId = DEFAULT_USER_ID) => {
       try {
-          const response = await apiClient.get('/chat/history', {
+          const response = await apiClient.get('chat/history', {
             params: { user_id: userId },
           });
           return response.data;
@@ -83,14 +84,14 @@ export const api = {
 
   getDocumentById: async (id) => {
     try {
-      const response = await apiClient.get(`/documents/${id}`);
+      const response = await apiClient.get(`documents/${id}`);
       return response.data;
     } catch (e) { handleApiError(e); }
   },
 
   resetAll: async () => {
     try {
-      const response = await apiClient.delete('/reset');
+      const response = await apiClient.delete('reset');
       return response.data;
     } catch (e) { handleApiError(e); }
   },
