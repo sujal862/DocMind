@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# BaseSettings ka benefit yeh hota hai ki tum defaults bhi de sakte ho, aur agar .env file ya environment variable available ho toh woh automatically un values ko use kar leta hai.
 class Settings(BaseSettings):
     # MongoDB
     MONGO_URI: str = "mongodb://localhost:27017"
@@ -16,8 +15,13 @@ class Settings(BaseSettings):
 
     # OpenAI
     OPENAI_API_KEY: str | None = None
-    
-    # app .env file read karega aur usme jo variables honge unko load karega.
+
+    # AWS S3
+    AWS_ACCESS_KEY_ID: str | None = None
+    AWS_SECRET_ACCESS_KEY: str | None = None
+    AWS_REGION: str = "ap-south-1"
+    S3_BUCKET_NAME: str = "docmind-uploads"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

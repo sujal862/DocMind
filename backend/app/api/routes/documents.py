@@ -5,20 +5,19 @@ from bson import ObjectId
 from ...db.mongodb import files_collection
 from ...db.neo4j import get_neo4j_session
 from ...db.qdrant import get_qdrant
+from ...db.s3 import upload_file_to_s3, delete_file_from_s3
 from ...graphs.ingestion import ingestion_app
 from qdrant_client.http import models
 
 router = APIRouter()
 
-UPLOAD_DIR = os.path.join(os.getcwd(), "backend", "uploads")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-async def process_document_background(file_path: str, db_file_id: str):
-    # Triggers the LangGraph ingestion flow
+async def process_document_background(s3_key: str, filename: str, db_file_id: str):
+    """Triggers the LangGraph ingestion flow with the S3 key."""
     try:
         await ingestion_app.ainvoke({
-            "files": [file_path],
-            "filenames": [os.path.basename(file_path).split("_", 1)[1]],
+            "files": [s3_key],          
+            "filenames": [filename],
             "db_file_ids": [db_file_id],
             "status": "started"
         })
@@ -28,7 +27,7 @@ async def process_document_background(file_path: str, db_file_id: str):
             {"$set": {"status": "failed", "error": str(e)}}
         )
 
-# Handling multiple files upload
+
 @router.post("/upload")
 async def upload_document(
     background_tasks: BackgroundTasks,
@@ -36,29 +35,30 @@ async def upload_document(
 ):
     responses = []
     for file in files:
-        # Create MongoDB Record
+        # Create MongoDB record
         db_file = await files_collection.insert_one({
             "name": file.filename,
             "status": "saving"
         })
         file_id_str = str(db_file.inserted_id)
-        
-        # Save to disk locally
-        file_path = os.path.join(UPLOAD_DIR, f"{file_id_str}_{file.filename}")
-        with open(file_path, "wb") as buffer:
-            buffer.write(await file.read())
-            
-        # Update status to queued
+
+        # Read file content and upload to S3
+        file_bytes = await file.read()
+        s3_key = f"uploads/{file_id_str}_{file.filename}"
+        upload_file_to_s3(file_bytes, s3_key)
+
+        # Update status to queued, store S3 key instead of local path
         await files_collection.update_one(
             {"_id": db_file.inserted_id},
-            {"$set": {"status": "queued", "path": file_path}}
+            {"$set": {"status": "queued", "path": s3_key}}
         )
-        
-        # Execute the heavy LangGraph ingestion in the background (Queue mein daala)
-        background_tasks.add_task(process_document_background, file_path, file_id_str)
+
+        # Execute ingestion in background
+        background_tasks.add_task(process_document_background, s3_key, file.filename, file_id_str)
         responses.append({"file_id": file_id_str, "filename": file.filename, "status": "queued"})
-        
+
     return {"message": "Files uploaded successfully, processing started", "files": responses}
+
 
 @router.get("/")
 async def list_documents():
@@ -73,6 +73,7 @@ async def list_documents():
             "relationship_count": doc.get("relationship_count", 0),
         })
     return {"documents": docs}
+
 
 @router.get("/{id}")
 async def get_document(id: str):
@@ -90,13 +91,14 @@ async def get_document(id: str):
         "error": doc.get("error"),
     }
 
+
 @router.delete("/{id}")
 async def delete_document(id: str):
     doc = await files_collection.find_one({"_id": ObjectId(id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    # Cleanup related data in Qdrant and Neo4j using file_id references
+    # Cleanup Qdrant vectors
     client = get_qdrant()
     if await client.collection_exists("docmind_chunks"):
         await client.delete(
@@ -113,6 +115,7 @@ async def delete_document(id: str):
             ),
         )
 
+    # Cleanup Neo4j
     async for session in get_neo4j_session():
         await session.run(
             """
@@ -152,10 +155,15 @@ async def delete_document(id: str):
             """
         )
 
-    file_path = doc.get("path")
-    if file_path and os.path.exists(file_path):
-        os.remove(file_path)
+    # Delete file from S3
+    s3_key = doc.get("path")
+    if s3_key:
+        try:
+            delete_file_from_s3(s3_key)
+        except Exception:
+            pass  # File may already be deleted
 
+    # Delete MongoDB record
     result = await files_collection.delete_one({"_id": ObjectId(id)})
     if result.deleted_count == 1:
         return {"message": f"Document {id} deleted successfully"}

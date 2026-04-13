@@ -1,17 +1,15 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from ...db.mongodb import files_collection
 from ...db.qdrant import get_qdrant
 from ...db.neo4j import neo4j_driver
 from ...db.mem0_client import get_memory
-import shutil, os
+from ...db.s3 import delete_all_files_from_s3
 
 router = APIRouter()
 
-UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "uploads")
-
 @router.delete("/")
 async def reset_all():
-    """Wipe all data: MongoDB docs, Qdrant vectors, Neo4j graph, Mem0 memory, and uploaded files."""
+    """Wipe all data: MongoDB docs, Qdrant vectors, Neo4j graph, Mem0 memory, and S3 files."""
     errors = []
 
     # 1. MongoDB — drop all documents
@@ -41,15 +39,11 @@ async def reset_all():
     except Exception as e:
         errors.append(f"Mem0: {e}")
 
-    # 5. Delete uploaded files
+    # 5. S3 — delete all uploaded files
     try:
-        if os.path.exists(UPLOAD_DIR):
-            for f in os.listdir(UPLOAD_DIR):
-                filepath = os.path.join(UPLOAD_DIR, f)
-                if os.path.isfile(filepath):
-                    os.remove(filepath)
+        delete_all_files_from_s3()
     except Exception as e:
-        errors.append(f"Files: {e}")
+        errors.append(f"S3: {e}")
 
     if errors:
         return {"message": "Reset completed with some errors", "errors": errors}

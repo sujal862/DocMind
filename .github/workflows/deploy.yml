@@ -1,0 +1,38 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/DocMind
+
+            # Pull latest code
+            git pull origin main
+
+            # Backend — install dependencies
+            cd backend
+            source venv/bin/activate
+            pip install -r requirements.txt --quiet
+            cd ..
+
+            # Frontend — install dependencies and rebuild ( “API(backend) base URL = /api use karo”)
+            cd frontend
+            npm install
+            NEXT_PUBLIC_API_URL=/api npm run build
+            cd ..
+
+            # Restart both services
+            pm2 restart ecosystem.config.js
+
+            echo "Deploy complete!"

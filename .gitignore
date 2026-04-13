@@ -44,3 +44,9 @@ out/
 .idea/
 .DS_Store
 Thumbs.db
+
+
+# .md
+Workflow.md
+DEPLOY.md
+deploy.sh
