@@ -18,7 +18,7 @@ app.add_middleware(
 
 @app.get("/health")
 def hello():
-    return {"status": "healthy"}
+    return {"status": "system is healthy"}
 
 # API Routers
 app.include_router(documents.router, prefix="/documents", tags=["Documents"])
