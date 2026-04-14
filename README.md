@@ -67,7 +67,7 @@ User Query → Classify Type → Route to Retriever → Generate Answer (GPT-4o-
 
 **Databases:** MongoDB (metadata), Qdrant (vectors), Neo4j (knowledge graph)
 
-**Infrastructure:** AWS S3, Docker Compose, Nginx, PM2, GitHub Actions CI/CD
+**Infrastructure:** AWS S3, EC2, Docker Compose, Nginx, PM2, GitHub Actions CI/CD
 
 ---
 
