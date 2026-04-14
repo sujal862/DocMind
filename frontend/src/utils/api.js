@@ -35,10 +35,10 @@ export const api = {
       return response.data;
     } catch (e) { handleApiError(e); }
   },
-  
+
   getDocuments: async () => {
     try {
-      const response = await apiClient.get('documents');
+      const response = await apiClient.get('documents/');
       return response.data.documents || [];
     } catch (e) { handleApiError(e); }
   },
@@ -53,7 +53,7 @@ export const api = {
   // Knowledge Graph
   getKnowledgeGraph: async () => {
     try {
-      const response = await apiClient.get('graph');
+      const response = await apiClient.get('graph/');
       return response.data;
     } catch (e) { handleApiError(e); }
   },
@@ -68,11 +68,11 @@ export const api = {
   // Chat
   sendChatMessage: async (query, userId = DEFAULT_USER_ID) => {
     try {
-      const response = await apiClient.post('chat', { query, user_id: userId });
+      const response = await apiClient.post('chat/', { query, user_id: userId });
       return response.data;
     } catch (e) { handleApiError(e); }
   },
-  
+
   getChatHistory: async (userId = DEFAULT_USER_ID) => {
       try {
           const response = await apiClient.get('chat/history', {
@@ -91,7 +91,7 @@ export const api = {
 
   resetAll: async () => {
     try {
-      const response = await apiClient.delete('reset');
+      const response = await apiClient.delete('reset/');
       return response.data;
     } catch (e) { handleApiError(e); }
   },
